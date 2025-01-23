@@ -1,12 +1,19 @@
 package com.example.libraryservicemanager.web;
 
 import com.example.libraryservicemanager.domain.Response;
+import com.example.libraryservicemanager.dto.LoginRequest;
+import com.example.libraryservicemanager.dto.User;
 import com.example.libraryservicemanager.dto.UserRequest;
+import com.example.libraryservicemanager.service.JwtService;
 import com.example.libraryservicemanager.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import static com.example.libraryservicemanager.utils.RequestUtils.getResponse;
@@ -22,6 +29,7 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<Response> saveUser(@RequestBody UserRequest user, HttpServletRequest request){
@@ -34,12 +42,20 @@ public class UserController {
         userService.verifyAccount(key);
         return ResponseEntity.ok().body(getResponse(request,emptyMap(),"Account verified",OK));
     }
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<Response> test(@RequestBody UserRequest user){
-//        authenticationManager.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(user.getEmail(),user.getPassword()));
-//        return ResponseEntity.ok().build();
-//    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Response> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+        var authenticationToken = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword());
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        User user = (User) authentication.getPrincipal();
+        jwtService.addCookie(response, user, com.example.libraryservicemanager.model.enumeration.TokenType.ACCESS);
+        jwtService.addCookie(response, user, com.example.libraryservicemanager.model.enumeration.TokenType.REFRESH);
+
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Login successful", OK));
+
+    }
     private URI getUrl() {
         return URI.create("");
     }

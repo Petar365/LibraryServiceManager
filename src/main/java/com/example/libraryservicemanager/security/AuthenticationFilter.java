@@ -1,8 +1,12 @@
 package com.example.libraryservicemanager.security;
 
 import com.example.libraryservicemanager.domain.LibraryServiceAuthentication;
+import com.example.libraryservicemanager.domain.Response;
 import com.example.libraryservicemanager.dto.LoginRequest;
+import com.example.libraryservicemanager.dto.User;
 import com.example.libraryservicemanager.model.enumeration.LoginType;
+import com.example.libraryservicemanager.model.enumeration.TokenType;
+import com.example.libraryservicemanager.service.JwtService;
 import com.example.libraryservicemanager.service.UserService;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +14,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -19,22 +22,27 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
+import java.util.Map;
 
+import static com.example.libraryservicemanager.model.constant.Constants.LOGIN_PATH;
+import static com.example.libraryservicemanager.utils.RequestUtils.getResponse;
 import static com.example.libraryservicemanager.utils.RequestUtils.handleErrorResponse;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
 public class AuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     private final UserService userService;
-//    private final JwtService jwtService;
+    private final JwtService jwtService;
 
     protected AuthenticationFilter(AuthenticationManager authenticationManager, UserService userService
-                                            //,   JwtService jwtService
+                                            ,JwtService jwtService
     ) {
-        super(new AntPathRequestMatcher("user/login", POST.name()), authenticationManager);
+        super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()), authenticationManager);
         this.userService = userService;
-      //  this.jwtService = jwtService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -52,7 +60,26 @@ public class AuthenticationFilter extends AbstractAuthenticationProcessingFilter
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        super.successfulAuthentication(request, response, chain, authResult);
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
+        var user = (User) authentication.getPrincipal();
+        userService.updateLoginAttempt(user.getEmail(),LoginType.LOGIN_SUCCESS);
+        var httpResponse = user.isMfa() ? sendQrCode(request, user) : sendResponse(request , response,  user);
+        response.setContentType(APPLICATION_JSON_VALUE);
+        response.setStatus(OK.value());
+        var out = response.getOutputStream();
+        var mapper = new ObjectMapper();
+        mapper.writeValue(out,httpResponse);
+        out.flush();
+    }
+
+
+    private Response sendResponse(HttpServletRequest request, HttpServletResponse response, User user) {
+        jwtService.addCookie(response,user, TokenType.ACCESS);
+        jwtService.addCookie(response,user,TokenType.REFRESH);
+        return getResponse(request, Map.of("user",user),"Login Success",  OK);
+    }
+
+    private Response sendQrCode(HttpServletRequest request, User user) {
+        return getResponse(request,Map.of("user",user),"Please enter qr code", OK);
     }
 }

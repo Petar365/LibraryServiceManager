@@ -1,10 +1,10 @@
 package com.example.libraryservicemanager.service;
 
 
+import com.example.libraryservicemanager.dto.User;
+import com.example.libraryservicemanager.model.CredentialEntity;
 import com.example.libraryservicemanager.model.RoleEntity;
 import com.example.libraryservicemanager.model.enumeration.LoginType;
-
-import java.util.*;
 
 public interface UserService {
 
@@ -15,4 +15,11 @@ public interface UserService {
     void verifyAccount(String key);
 
     void updateLoginAttempt(String email, LoginType loginType);
+
+    User getUserById(Long id);
+
+    User getUserByEmail(String email);
+
+    CredentialEntity getUserCredentialById(Long id);
+
 }

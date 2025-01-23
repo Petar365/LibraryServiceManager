@@ -2,6 +2,7 @@ package com.example.libraryservicemanager.service.impl;
 
 import com.example.libraryservicemanager.cache.CacheStore;
 import com.example.libraryservicemanager.domain.RequestContext;
+import com.example.libraryservicemanager.dto.User;
 import com.example.libraryservicemanager.event.UserEvent;
 import com.example.libraryservicemanager.model.ConfirmationEntity;
 import com.example.libraryservicemanager.model.CredentialEntity;
@@ -16,6 +17,7 @@ import com.example.libraryservicemanager.repository.CredentialRepository;
 import com.example.libraryservicemanager.repository.RoleRepository;
 import com.example.libraryservicemanager.repository.UserRepository;
 import com.example.libraryservicemanager.service.UserService;
+import com.example.libraryservicemanager.utils.UserUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,7 +39,6 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
-//    private final BCryptPasswordEncoder encoder;
     private final CacheStore<String , Integer> userCache;
     private final ApplicationEventPublisher publisher;
 
@@ -91,6 +92,28 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
     }
 
+    @Override
+    public User getUserById(Long id) {
+        UserEntity userEntity = userRepository.findUserByUserId(id)
+                .orElseThrow(() -> new ApiException("User Not Found"));
+
+        return UserUtils.mapToUserDto(userEntity);
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        UserEntity userEntity = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ApiException("User Not Found"));
+
+        return UserUtils.mapToUserDto(userEntity);
+    }
+
+
+    public CredentialEntity getUserCredentialById(Long userId) {
+        var credentialById =credentialRepository.getCredentialsByUserEntityId(userId);
+        return credentialById.orElseThrow(() -> new ApiException("Credentials Not Found"));
+    }
+
     private UserEntity getUserEntityByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email).orElseThrow(() -> new ApiException("User Not Found"));
     }
@@ -104,4 +127,5 @@ public class UserServiceImpl implements UserService {
         var role = getRoleName(Authority.USER.name());
         return creatUserEntity(firstname,lastname,email,role);
     }
+
 }

@@ -1,12 +1,9 @@
 package com.example.libraryservicemanager.dto;
 
-import com.example.libraryservicemanager.model.RoleEntity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 @Data
+@Builder
 public class User {
     private Long id;
     private Long createdBy;
