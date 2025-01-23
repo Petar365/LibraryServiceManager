@@ -38,6 +38,8 @@ public class FilterChainConfiguration {
                         .requestMatchers("/user/login").permitAll()
                         .requestMatchers("/user/register").permitAll()
                         .requestMatchers("/user/verify/account").permitAll()
+                        .requestMatchers("/books").permitAll()
+                        .requestMatchers("/books/{id}").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class)

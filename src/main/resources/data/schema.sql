@@ -92,27 +92,19 @@ CREATE TABLE IF NOT EXISTS public.user_roles
 
 );
 
-
-CREATE TABLE IF NOT EXISTS public.documents
+CREATE TABLE IF NOT EXISTS public.book
 (
-    id             SERIAL PRIMARY KEY,
-    document_id    CHARACTER VARYING(255) NOT NULL,
-    extension      CHARACTER VARYING(10),
-    formatted_size CHARACTER VARYING(10),
-    icon           CHARACTER VARYING(255),
-    name           CHARACTER VARYING(255),
-    size           BIGINT                 NOT NULL,
-    uri            CHARACTER VARYING(255),
-    description    CHARACTER VARYING(255),
-    reference_id   CHARACTER VARYING(255),
-    created_by     BIGINT                 NOT NULL,
-    updated_by     BIGINT                 NOT NULL,
-    created_at     TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT up_documents_document_id UNIQUE (document_id),
-    CONSTRAINT fk_documents_created_by FOREIGN KEY (created_by) REFERENCES users (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_documents_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
+    id bigint NOT NULL,
+    author character varying(255) COLLATE pg_catalog."default",
+    title character varying(255) COLLATE pg_catalog."default",
+    added_at timestamp(6) without time zone,
+    isbn character varying(255) COLLATE pg_catalog."default",
+    quantity integer,
+    description text,
+    release_date date,
+    CONSTRAINT book_pkey PRIMARY KEY (id)
 );
+
 
 CREATE INDEX IF NOT EXISTS index_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS index_users_user_id ON users (user_id);

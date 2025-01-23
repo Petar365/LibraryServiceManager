@@ -156,6 +156,7 @@ public class JwtServiceImpl extends JwtConfiguration implements JwtService {
         if (optionalCookie.isPresent()) {
             var cookie = optionalCookie.get();
             cookie.setMaxAge(0);
+            cookie.setPath("/");
             response.addCookie(cookie);
         }
     }

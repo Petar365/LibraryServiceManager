@@ -9,6 +9,7 @@ import com.example.libraryservicemanager.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,6 +57,15 @@ public class UserController {
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Login successful", OK));
 
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Response> logout(HttpServletRequest request, HttpServletResponse response) {
+        jwtService.removeCookie(request, response, "ACCESS_TOKEN");
+        jwtService.removeCookie(request, response, "REFRESH_TOKEN");
+
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "Logout successful", HttpStatus.OK));
+    }
+
     private URI getUrl() {
         return URI.create("");
     }
