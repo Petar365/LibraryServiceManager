@@ -42,3 +42,33 @@ Features
     H2/PostgreSQL/MySQL: Database options (use H2 for development and MySQL/PostgreSQL for production).
     JavaMailSender: For sending emails.
     Maven: Build automation and dependency management.
+
+
+
+To test the backend use Postman
+
+    For Registration use :
+    POST http://localhost:8081/user/register
+
+            With JSON body
+            {
+            "firstName": "",
+            "lastName": "",
+            "email": ",
+            "password": ""
+            }
+
+    For Account Enabling/Validating use :
+    GET (The link that was sent to the email of the created account)
+
+    For Login use :
+    POST http://localhost:8081/user/login
+
+        With JSON body
+            {
+            "email": "petar365@gmail.com",
+            "password": "password"
+            }
+    
+
+    
