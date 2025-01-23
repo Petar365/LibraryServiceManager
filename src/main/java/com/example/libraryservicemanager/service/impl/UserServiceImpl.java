@@ -94,7 +94,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long id) {
-        UserEntity userEntity = userRepository.findUserByUserId(id)
+        UserEntity userEntity = userRepository.findUserByUserId(String.valueOf(id))
                 .orElseThrow(() -> new ApiException("User Not Found"));
 
         return UserUtils.mapToUserDto(userEntity);
