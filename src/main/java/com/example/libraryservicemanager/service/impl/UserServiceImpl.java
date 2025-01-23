@@ -16,11 +16,13 @@ import com.example.libraryservicemanager.repository.ConfirmationRepository;
 import com.example.libraryservicemanager.repository.CredentialRepository;
 import com.example.libraryservicemanager.repository.RoleRepository;
 import com.example.libraryservicemanager.repository.UserRepository;
+import com.example.libraryservicemanager.security.SecurityConfig;
 import com.example.libraryservicemanager.service.UserService;
 import com.example.libraryservicemanager.utils.UserUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,16 +41,19 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
-    private final CacheStore<String , Integer> userCache;
+    private final CacheStore<String, Integer> userCache;
     private final ApplicationEventPublisher publisher;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public void createUser(String firstname, String lastname, String email, String password) {
-       var userEntity = userRepository.save(createNewUser(firstname,lastname,email));
-       var credentialEntity = new CredentialEntity(password, userEntity);
-       var confirmationEntity = new ConfirmationEntity(userEntity);
-       confirmationRepository.save(confirmationEntity);
-       publisher.publishEvent(new UserEvent(userEntity, EventType.REGISTRATION, Map.of("key",confirmationEntity.getKey())));
+        var encodedPassword = passwordEncoder.encode(password);
+        var userEntity = userRepository.save(createNewUser(firstname, lastname, email));
+        var credentialEntity = new CredentialEntity(encodedPassword, userEntity);
+        credentialRepository.save(credentialEntity);
+        var confirmationEntity = new ConfirmationEntity(userEntity);
+        confirmationRepository.save(confirmationEntity);
+        publisher.publishEvent(new UserEvent(userEntity, EventType.REGISTRATION, Map.of("key", confirmationEntity.getKey())));
     }
 
     @Override
@@ -68,17 +73,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateLoginAttempt(String email, LoginType loginType) {
-        var userEntity= getUserEntityByEmail(email);
+        var userEntity = getUserEntityByEmail(email);
         RequestContext.setUserId(userEntity.getId());
-        switch (loginType){
+        switch (loginType) {
             case LOGIN_ATTEMPT -> {
-                if( userCache.get(email) == null){
+                if (userCache.get(email) == null) {
                     userEntity.setLoginAttempts(0);
                     userEntity.setAccountNonLocked(true);
                 }
-                userEntity.setLoginAttempts(userEntity.getLoginAttempts()+1);
+                userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
                 userCache.put(userEntity.getEmail(), userEntity.getLoginAttempts());
-                if (userCache.get(userEntity.getEmail())>5){
+                if (userCache.get(userEntity.getEmail()) > 5) {
                     userEntity.setAccountNonLocked(false);
                 }
             }
@@ -110,7 +115,7 @@ public class UserServiceImpl implements UserService {
 
 
     public CredentialEntity getUserCredentialById(Long userId) {
-        var credentialById =credentialRepository.getCredentialsByUserEntityId(userId);
+        var credentialById = credentialRepository.getCredentialsByUserEntityId(userId);
         return credentialById.orElseThrow(() -> new ApiException("Credentials Not Found"));
     }
 
@@ -125,7 +130,7 @@ public class UserServiceImpl implements UserService {
 
     private UserEntity createNewUser(String firstname, String lastname, String email) {
         var role = getRoleName(Authority.USER.name());
-        return creatUserEntity(firstname,lastname,email,role);
+        return creatUserEntity(firstname, lastname, email, role);
     }
 
 }

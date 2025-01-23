@@ -53,16 +53,16 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     private final Consumer<UserPrincipal> validAccount = userPrincipal -> {
 
-        if (userPrincipal.isAccountNonLocked()) {
+        if (!userPrincipal.isAccountNonLocked()) {
             throw new LockedException("Your account is locked");
         }
-        if (userPrincipal.isEnabled()) {
+        if (!userPrincipal.isEnabled()) {
             throw new DisabledException("Your account is disabled");
         }
-        if (userPrincipal.isAccountNonExpired()) {
+        if (!userPrincipal.isAccountNonExpired()) {
             throw new CredentialsExpiredException("Your password has expired. Update your password");
         }
-        if (userPrincipal.isCredentialsNonExpired()) {
+        if (!userPrincipal.isCredentialsNonExpired()) {
             throw new DisabledException("Your account is expired. Contact administrator");
         }
 
